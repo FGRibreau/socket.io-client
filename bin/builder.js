@@ -55,7 +55,7 @@ var base = [
 
 /**
  * The available transports for Socket.IO. These are mapped as:
- * 
+ *
  *   - `key` the name of the transport
  *   - `value` the dependencies for the transport
  *
@@ -71,7 +71,7 @@ var baseTransports = {
       , 'transports/flashsocket.js'
       , 'vendor/web-socket-js/swfobject.js'
       , 'vendor/web-socket-js/web_socket.js'
-    ] 
+    ]
   , 'htmlfile': ['transports/xhr.js', 'transports/htmlfile.js']
   /* FIXME: re-enable me once we have multi-part support
   , 'xhr-multipart': ['transports/xhr.js', 'transports/xhr-multipart.js'] */
@@ -170,16 +170,18 @@ var builder = module.exports = function () {
 
   var results = {};
   files.forEach(function (file) {
-    fs.readFile(file, function (err, content) {
-      if (err) error = err;
-      results[file] = content;
+    // fs.readFile never called the callback on our production server
+    // but the same fn with the same arguments WORKED under REPL. #WTF
+    //
+    var content = fs.readFileSync(file);
+    results[file] = content;
 
-      // check if we are done yet, or not.. Just by checking the size of the result
-      // object.
-      if (Object.keys(results).length !== files.length) return;
+    // check if we are done yet, or not.. Just by checking the size of the result
+    // object.
+    if (Object.keys(results).length !== files.length) return;
 
-      // we are done, did we error?
-      if (error) return callback(error);
+      // // we are done, did we error?
+      // if (error) return callback(error);
 
       // start with the license header
       var code = development
@@ -242,7 +244,6 @@ var builder = module.exports = function () {
       }
 
       callback(error, code);
-    })
   })
 };
 
@@ -254,7 +255,7 @@ var builder = module.exports = function () {
  * @type {String}
  * @api public
  */
- 
+
 builder.version = socket.version;
 
 /**
@@ -263,14 +264,14 @@ builder.version = socket.version;
  * @type {Object}
  * @api public
  */
- 
+
 builder.transports = baseTransports;
 
 /**
  * Command line support, this allows us to generate builds without having
  * to load it as module.
  */
- 
+
 if (!module.parent){
   // the first 2 are `node` and the path to this file, we don't need them
   var args = process.argv.slice(2);
@@ -291,7 +292,7 @@ if (!module.parent){
   // and build a production build
   builder(args.length ? args : false, function (err, content) {
     if (err) return console.error(err);
- 
+
     fs.write(
         fs.openSync(__dirname + '/../dist/socket.io.min.js', 'w')
       , content
